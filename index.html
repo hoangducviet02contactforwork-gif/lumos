@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1024">
+  <meta name="description" content="Một mini game nhỏ: sửa chiếc đèn chập chờn và thắp sáng đêm tối.">
+  <title>Thợ điện bất đắc dĩ 🌙</title>
+  <style>
+    :root { color-scheme: dark; --gold:#ffd36a; --ink:#0b1024; --cream:#fff4d6; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100svh; overflow-x: hidden; color: var(--cream);
+      font-family: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(ellipse at 50% 35%, rgba(85,105,174,.22), transparent 42%),
+        linear-gradient(180deg, #0b1024 0%, #151a37 58%, #33274a 100%);
+      display: grid; place-items: center; padding: 22px 16px;
+    }
+    .stars, .stars::before, .stars::after {
+      position: fixed; inset: 0; pointer-events: none; content: ""; z-index: 0;
+      background-image: radial-gradient(2px 2px at 12% 17%, #ffe5a1 80%, transparent),
+        radial-gradient(1px 1px at 79% 12%, #fff 80%, transparent),
+        radial-gradient(2px 2px at 88% 39%, #ffe5a1 80%, transparent),
+        radial-gradient(1px 1px at 24% 62%, #fff 80%, transparent),
+        radial-gradient(1.5px 1.5px at 67% 73%, #ffe5a1 80%, transparent),
+        radial-gradient(1px 1px at 42% 29%, #fff 80%, transparent);
+      animation: twinkle 4s ease-in-out infinite alternate;
+    }
+    .stars::before { transform: translate(13px, 22px); opacity: .5; animation-delay: -2s; }
+    .stars::after { transform: translate(-18px, -9px); opacity: .4; animation-delay: -1s; }
+    @keyframes twinkle { from { opacity: .35; } to { opacity: 1; } }
+    .app { position: relative; z-index: 1; width: min(100%, 440px); text-align: center; }
+    .eyebrow { color: #bfc7e9; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { font-size: clamp(1.8rem, 7vw, 2.5rem); line-height: 1.12; margin: 12px 0 8px; }
+    .subtitle { color: #d4d8ee; line-height: 1.55; margin: 0 auto; max-width: 330px; }
+    .room {
+      position: relative; margin: 28px auto 20px; width: min(100%, 330px); height: 285px;
+      border: 1px solid rgba(255,255,255,.1); border-radius: 28px; overflow: hidden;
+      background: linear-gradient(180deg, rgba(16,24,52,.75), rgba(35,30,61,.86));
+      box-shadow: 0 22px 70px #02051166, inset 0 0 30px #0003;
+      transition: background .8s, box-shadow .8s;
+    }
+    .window { position:absolute; left: 18px; bottom: 48px; width: 75px; height: 105px;
+      border: 5px solid #303957; border-radius: 7px; background: linear-gradient(#27385d,#141c38); }
+    .window::before { content:""; position:absolute; left:31px; top:0; height:100%; width:3px; background:#303957; }
+    .window::after { content:""; position:absolute; top:47px; left:0; width:100%; height:3px; background:#303957; }
+    .shelf { position:absolute; bottom:44px; right:17px; width:85px; height:9px; border-radius:8px; background:#58415b; }
+    .shelf::before { content:""; position:absolute; left:8px; top:8px; width:5px; height:26px; background:#58415b; box-shadow:62px 0 #58415b; }
+    .cord { position:absolute; left:50%; top:0; width:3px; height:58px; background:#5c5265; }
+    .bulb {
+      position:absolute; left:50%; top:53px; transform:translateX(-50%);
+      width:76px; height:94px; border-radius:48% 48% 42% 42%;
+      background: radial-gradient(circle at 35% 25%, #fff0b9, #e7b85e 72%, #bd7e3a);
+      box-shadow: 0 0 0 8px #ffd36a0b, 0 0 35px 12px #ffca5b35;
+      transition: all .6s ease;
+      animation: flicker 1.7s infinite;
+    }
+    .bulb::before { content:""; position:absolute; top:-12px; left:23px; width:30px; height:19px;
+      border-radius:5px; background:repeating-linear-gradient(0deg,#77718a 0 4px,#4b4b66 4px 7px); }
+    .face { position:absolute; left:0; right:0; top:43px; font-size:24px; color:#51344a; }
+    @keyframes flicker { 0%, 18%, 22%, 55%, 58%, 100% { opacity:1; filter:brightness(1); }
+      20%, 56% { opacity:.45; filter:brightness(.55); } }
+    .room.fixed { background: radial-gradient(ellipse at 50% 36%, #66502f 0%, #252746 52%, #27213c 100%); box-shadow: 0 0 55px #ffca5b22; }
+    .room.fixed .bulb { background: radial-gradient(circle at 35% 25%, #fffbe3, #ffe083 62%, #f7b84e); box-shadow: 0 0 28px 12px #ffce5c88, 0 0 90px 28px #ffce5c38; animation: glow 2.4s ease-in-out infinite alternate; }
+    .room.fixed .bulb::after { content:"✦  ·  ✧"; position:absolute; left:-36px; top:26px; width:150px; font-size:20px; color:#ffe9a0; white-space:nowrap; }
+    .room.fixed .face { top:43px; }
+    @keyframes glow { from { filter:brightness(1); } to { filter:brightness(1.12); } }
+    .bubble { min-height: 55px; font-size: 1.06rem; line-height:1.5; margin: 12px auto 20px; max-width: 340px; }
+    button {
+      border:0; border-radius:999px; padding:15px 23px; background:var(--gold); color:#342443;
+      font:700 1rem inherit; font-size:1rem; font-weight:800; cursor:pointer;
+      box-shadow:0 7px 0 #bd8746, 0 12px 30px #0003; transition:transform .15s, box-shadow .15s;
+      min-width: 205px; touch-action: manipulation;
+    }
+    button:active { transform:translateY(4px); box-shadow:0 3px 0 #bd8746; }
+    button:focus-visible { outline:3px solid white; outline-offset:4px; }
+    .hint { font-size:.78rem; color:#aeb7db; margin-top:15px; }
+    .final { display:none; margin:24px auto 0; padding:20px 18px; border:1px solid #ffd36a55; border-radius:20px; background:#0b102488; line-height:1.65; animation: rise .7s ease both; }
+    .final.show { display:block; }
+    .final strong { color:#ffe39b; }
+    .tiny { margin-top:18px; color:#bfc7e9; font-size:.8rem; }
+    @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="stars" aria-hidden="true"></div>
+  <main class="app">
+    <div class="eyebrow">Dịch vụ thợ điện lúc nửa đêm</div>
+    <h1>Đèn nhà nàng<br>đang chập chờn à? 💡</h1>
+    <p class="subtitle" id="intro">Đừng lo, tôi đến sửa đây… dù bằng cấp thợ điện vẫn đang được xét duyệt.</p>
+
+    <section class="room" id="room" aria-label="Căn phòng với chiếc bóng đèn đang chập chờn">
+      <div class="window"></div><div class="shelf"></div><div class="cord"></div>
+      <div class="bulb" id="bulb"><div class="face" id="face">•ᴗ•</div></div>
+    </section>
+
+    <p class="bubble" id="bubble" aria-live="polite">Đang kiểm tra bóng đèn… xin nàng đừng bật cầu dao bằng niềm tin.</p>
+    <button id="repair" type="button">🔧 Sửa đèn ngay</button>
+    <p class="hint" id="hint">Chạm nút để bắt đầu nhiệm vụ.</p>
+
+    <section class="final" id="final" aria-live="polite">
+      <div style="font-size:1.8rem">🌙 ✨</div>
+      <p><strong>Không thể hái trăng trên trời,</strong><br>nhưng có thể thắp sáng đêm tối.</p>
+      <p>Và nếu có lúc ngày của nàng hơi tối,<br>tôi có thể góp một chút ánh sáng bình thường thôi. 😊</p>
+      <p style="margin-bottom:0">— Thợ điện chưa có chứng chỉ, nhưng có thành ý.</p>
+    </section>
+    <p class="tiny">Bảo hành ánh sáng: đến khi nàng cười. 🤝</p>
+  </main>
+  <script>
+    const room = document.getElementById('room');
+    const face = document.getElementById('face');
+    const bubble = document.getElementById('bubble');
+    const button = document.getElementById('repair');
+    const hint = document.getElementById('hint');
+    const final = document.getElementById('final');
+    const intro = document.getElementById('intro');
+    let fixed = false;
+
+    button.addEventListener('click', () => {
+      if (!fixed) {
+        button.disabled = true;
+        button.textContent = '🪛 Đang vặn ốc...';
+        face.textContent = '×ᴗ×';
+        bubble.textContent = 'Chờ chút nhé… con ốc này có vẻ cũng đang suy nghĩ về cuộc đời.';
+        hint.textContent = 'Đang dùng 100% kinh nghiệm xem video hướng dẫn.';
+        room.style.animation = 'none';
+        window.setTimeout(() => {
+          fixed = true;
+          room.classList.add('fixed');
+          face.textContent = '•ᴗ•';
+          bubble.textContent = 'Ting! Sáng rồi nè. Thợ điện hôm nay cũng hơi bất ngờ. ✨';
+          intro.textContent = 'Ca sửa chữa thành công ngoài dự kiến!';
+          button.disabled = false;
+          button.textContent = '💛 Bật mí thêm một chút';
+          hint.textContent = 'Đèn sáng rồi, nhưng hình như còn điều muốn nói…';
+        }, 1300);
+      } else if (button.textContent.includes('Bật mí')) {
+        final.classList.add('show');
+        button.textContent = '🔁 Thử lại từ đầu';
+        hint.textContent = 'Nhiệm vụ hoàn thành. Thợ điện xin cúi chào!';
+        final.scrollIntoView({behavior:'smooth', block:'nearest'});
+      } else {
+        window.location.reload();
+      }
+    });
+  </script>
+</body>
+</html>
